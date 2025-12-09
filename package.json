@@ -1,0 +1,25 @@
+{
+  "name": "nseaieproject",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "make:wav": "node scripts/make-wav.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^24.10.1",
+    "say": "^0.16.0"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "playwright": "^1.57.0",
+    "playwright-core": "^1.57.0",
+    "undici-types": "^7.16.0"
+  },
+  "description": ""
+}
