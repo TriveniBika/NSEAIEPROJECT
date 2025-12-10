@@ -25,13 +25,14 @@ export default defineConfig({
         headless: false,   //launch GUI mode
         //headless : true,  //no gui, default is true
         viewport: { width: 1280, height: 720 },
+        //viewport: null,
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry', //on-first-retry,retain-on-failure, on, off
         //video consume more disk space
         video: 'off',    //on , off, on-first-retry, retain-on-failure
-        screenshot: 'on',
-        workers : 1, // run tests sequentially 1worker = 1 spec.js file at a time
+        screenshot: 'retain-on-failure',
+        workers: 1, // run tests sequentially 1worker = 1 spec.js file at a time
         //handle location browser launching for different devices
 
         //critical for fake mic:Microphone/Camera (Chromium), pass the Chromium flags:

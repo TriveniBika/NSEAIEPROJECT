@@ -4,13 +4,16 @@ const fs = require('fs');
 const path = require('path');
 
 // 1) Your speech text (change this to any phrase you need)
-const businessOpportunity = 'The client aims to improve product findability in stores for consumers through a newly developed app. This app should allow consumers to navigate from their smartphone to the exact location in the store where the desired product is placed. To enable this from a data perspective, the client is considering implementing the BlueYonder Floorplanning module.';
-const businessValue = "This would involve integrating numerous existing store layout and construction drawings into BlueYonder. While this could be done manually by consultants, the client believes there may be smarter AI-driven solutions to streamline and optimize this process. (If preferred, the BlueYonder reference can be omitted, and a broader AI-based solution can be proposed instead)";
+const businessOpportunity = 'AI-powered traffic flow prediction and dynamic routing for urban mobility in cities like Amsterdam, Utrecht, and Rotterdam';
+const businessValue = "Improves commuter experience, reduces congestion and emissions, and aligns with Dutch smart-city initiatives";
 
 // 2) Output folder + file
 const outDir = path.resolve(__dirname, '../fixtures');
-const fileOpp   = path.join(outDir, 'business_opportunity.wav');
-const fileVal   = path.join(outDir, 'business_value.wav');
+// const fileOpp   = path.join(outDir, 'business_opportunity.wav');
+// const fileVal   = path.join(outDir, 'business_value.wav');
+
+const fileOpp   = path.join(outDir, 'BO_trafficeAI.wav');
+const fileVal   = path.join(outDir, 'BV_improveimpactAI.wav');
 
 // 3) Ensure fixtures/ exists
 fs.mkdirSync(outDir, { recursive: true });

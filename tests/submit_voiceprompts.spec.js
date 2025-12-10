@@ -1,22 +1,22 @@
-
-// tests/submit_voiceprompts.spec.js
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
+const timestamp = Date.now();
 
-// Resolve from the repo root (current working directory)
-const audio1Path = path.resolve(process.cwd(), 'fixtures', 'business_opportunity.wav');
-const audio2Path = path.resolve(process.cwd(), 'fixtures', 'business_value.wav');
+const audio1Path = path.resolve(process.cwd(), 'fixtures', 'BO_trafficeAI.wav');
+const audio2Path = path.resolve(process.cwd(), 'fixtures', 'BV_improveimpactAI.wav');
+// const audio1Path = path.resolve(process.cwd(), 'fixtures', 'business_opportunity.wav');
+// const audio2Path = path.resolve(process.cwd(), 'fixtures', 'business_value.wav');
 
-// (Optional) quick sanity checks so failures are explicit
+// Checks so failures are explicit
 if (!fs.existsSync(audio1Path)) {
-    throw new Error(`Audio #1 not found: ${audio1Path}`);
+    throw new Error(`wav audio #1 not found: ${audio1Path}`);
 }
 if (!fs.existsSync(audio2Path)) {
-    throw new Error(`Audio #2 not found: ${audio2Path}`);
+    throw new Error(`wav audio #2 not found: ${audio2Path}`);
 }
 
-// Context-level injection one time so it's resilient across navigation/renders.
+// Context-level 'addInitScript ' installs our getUserMedia override for all frames/pages in this test.
 async function injectAudioFeeder(page) {
     await page.context().addInitScript(() => {
         (function () {
@@ -157,14 +157,13 @@ async function injectAudioFeeder(page) {
 }
 
 test('Verify E2E prototype: Enable stakeholders to submit voice-based BO & BV, complete mandatory details, receive Submission ID & email, and open GitHub Spark prototype', async ({ page }) => {
-    // Route /fixtures/* to your local files so the page can fetch them
+    // Route /fixtures/* point to local files so the page can fetch them
     await page.route('**/fixtures/*', async (route) => {
         const url = new URL(route.request().url());
         const fileName = path.basename(url.pathname); // e.g., business_opportunity.wav
         const localPath = path.resolve(process.cwd(), 'fixtures', fileName);
-
         const body = await fs.promises.readFile(localPath);
-        // If using MP3s, change to 'audio/mpeg'
+        // using MP3s, change to 'audio/mpeg'
         await route.fulfill({
             status: 200,
             headers: { 'content-type': 'audio/wav' },
@@ -179,7 +178,7 @@ test('Verify E2E prototype: Enable stakeholders to submit voice-based BO & BV, c
 
     await injectAudioFeeder(page);
 
-    // Go to the submission page (your existing flow)
+    // Go to the submission page:
     await Promise.all([
         page.waitForSelector('.btn-text', { state: 'visible' }),
         page.locator('.btn-text').click(),
@@ -191,10 +190,9 @@ test('Verify E2E prototype: Enable stakeholders to submit voice-based BO & BV, c
     if (!feederReady) throw new Error('audioFeeder not present after navigation');
 
     // --- Prepare AUDIO #1: Business Opportunity ---
-    await page.evaluate(() =>
-        window.__audioFeeder.setNextClipFromUrl('/fixtures/business_opportunity.wav')
-    );
-
+    await page.evaluate((fname) => {
+        return window.__audioFeeder.setNextClipFromUrl(`/fixtures/${fname}`);
+    }, path.basename(audio1Path));
 
     // Read servedCount before clicking (baseline)
     //const beforeCount = await page.evaluate(() => window.__audioFeeder?.servedCount ?? 0);
@@ -228,11 +226,15 @@ test('Verify E2E prototype: Enable stakeholders to submit voice-based BO & BV, c
     // Stop recording
     await startStopOpp.click();
     await expect(startStopOpp).toHaveText(/^Start recording\s*$/i);
-
+    await page.screenshot({ path: `./screenshots/BO_${timestamp}.png` });
     // --- Prepare AUDIO #2: Business Value ---
-    await page.evaluate(() =>
-        window.__audioFeeder.setNextClipFromUrl('/fixtures/business_value.wav')
-    );
+    // await page.evaluate(() =>
+    //     window.__audioFeeder.setNextClipFromUrl('/fixtures/business_value.wav')
+    // );
+
+    await page.evaluate((fname) => {
+        return window.__audioFeeder.setNextClipFromUrl(`/fixtures/${fname}`);
+    }, path.basename(audio2Path));
 
     const startStopValue = page.locator('span.audio-recorder-action-text').last();
     await expect(startStopValue).toBeVisible();
@@ -265,19 +267,21 @@ test('Verify E2E prototype: Enable stakeholders to submit voice-based BO & BV, c
     // Fill form (personal details)
     await page.getByLabel('First name').fill('Triveni');
     await page.getByLabel('Last name').fill('Bika3');
-    await page.getByLabel('Email address').fill('triveni.bika@gmail.com');
-    await page.getByLabel('Phone number').fill('+31 874325222 ');
+    await page.getByLabel('Email address').fill('triveni.bika@capgemini.com');
+    await page.getByLabel('Phone number').fill('+31 674325222');
 
     //Company details:
     await page.getByLabel('Company name').fill('Capgemini');
-    await page.getByLabel('Your role').fill('Software Engineer');
-    const industrySelect = page.getByLabel('Industry');
-    await industrySelect.selectOption({ label: 'Information Technology and Services' });
+    await page.getByLabel('Your role').fill('AI Software Engineer');
+    //const goToIndustry = page.getByRole('combobox', { name: /Industry/i });
 
-    const orgAreaSelect = page.getByLabel('Organizational Area');
-    await orgAreaSelect.selectOption({ label: 'IT & Technology' });  // ({ index: 2 });
 
-    //await page.getByRole('button', { name: 'Go to Prompt Summary' }).click();
+    await page.getByRole('combobox').filter({ hasText: /Select your industry/i }).click();
+    await page.getByText('Healthcare & Life Sciences').click();
+    await page.getByRole('combobox').filter({ hasText: 'Select organizational area' }).click();
+    await page.getByRole('option', { name: 'IT & Technology' }).click();
+    await page.screenshot({ path: `./screenshots/org_${timestamp}.png` });
+
     await page.getByRole('button', { name: /Go to Prompt Summary/i }).click();
-
+    await page.screenshot({ path: `./screenshots/goto_prompt_${timestamp}.png` });
 });

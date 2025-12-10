@@ -1,5 +1,8 @@
-// @ts-check
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+import { permission } from 'process';
+const wavPath = path.resolve(__dirname, 'fixtures/business_opportunity.wa');
+const wavPath2 = path.resolve(__dirname, 'fixtures/business_value.wav');
 
 /**
  * Read environment variables from file.
@@ -14,6 +17,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  timeout: 40 * 1000,
+  expect: {
+    timeout: 50 * 1000,
+  },
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,50 +33,79 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'on'  // 'on-first-retry',
   },
+  launchOptions: {
+    args: [
+      '--use-fake-device-for-media-stream',
+      '--use-fake-ui-for-media-stream',
+      `--use-file-for-fake-audio-capture=${wavPath}%noloop`,
+      `--use-file-for-fake-audio-capture=${wavPath2}%noloop`,
+    ],
+  },
+  permissions: ['geolocation', 'microphone'],
+  geolocation: { latitude: 52.0907, longitude: 5.1214 }, // e.g., Utrecht
+  locale: 'en-US',
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      
+      use: {
+        browserName: 'chromium',
+        headless: false,   //launch GUI mode
+        //headless : true,  //no gui, default is true
+        viewport: { width: 1280, height: 720 },
+        //viewport: null,
+        video: 'on',
+        screenshot: 'retain-on-failure',
+        workers: 1, // run tests sequentially 1worker = 1 spec.js file at a time  
+      },
+
+    },
+    {
+      name: 'edge',
+      use: {
+        headless: false,
+        viewport: null,
+        channel: 'msedge',
+        screenshot: 'on',
+      },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    {
+      name: 'safariexecution',
+      use: {
+        browserName: 'webkit',
+        headless: false,
+        actionTimeout: 0,
+        //handle ssl certificate errors
+        ignoreHTTPSErrors: true,
+        video: 'on-first-retry',
+        screenshot: 'off',
+        ...devices['iphone 11']
+      },
+    },
 
     /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
 
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    Test against branded browsers. */
+     {
+      name: 'Microsoft Edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    },
+    {
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
